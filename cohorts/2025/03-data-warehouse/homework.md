@@ -28,6 +28,13 @@ Question 1: What is count of records for the 2024 Yellow Taxi Data?
 - 20,332,093
 - 85,431,289
 
+### Question 1 Answer:
+
+>My answer:
+```
+20,332,093
+```
+
 
 ## Question 2:
 Write a query to count the distinct number of PULocationIDs for the entire dataset on both the tables.</br> 
@@ -38,6 +45,13 @@ What is the **estimated amount** of data that will be read when this query is ex
 - 2.14 GB for the External Table and 0MB for the Materialized Table
 - 0 MB for the External Table and 0MB for the Materialized Table
 
+### Question 2 Answer:
+
+>My answer:
+```
+2.14 GB for the External Table and 0MB for the Materialized Table
+```
+
 ## Question 3:
 Write a query to retrieve the PULocationID form the table (not the external table) in BigQuery. Now write a query to retrieve the PULocationID and DOLocationID on the same table. Why are the estimated number of Bytes different?
 - BigQuery is a columnar database, and it only scans the specific columns requested in the query. Querying two columns (PULocationID, DOLocationID) requires 
@@ -47,6 +61,14 @@ doubling the estimated bytes processed.
 - BigQuery automatically caches the first queried column, so adding a second column increases processing time but does not affect the estimated bytes scanned.
 - When selecting multiple columns, BigQuery performs an implicit join operation between them, increasing the estimated bytes processed
 
+### Question 3 Answer:
+
+>My answer:
+```
+BigQuery is a columnar database, and it only scans the specific columns requested in the query. Querying two columns (PULocationID, DOLocationID) requires 
+reading more data than querying one column (PULocationID), leading to a higher estimated number of bytes processed.
+```
+
 ## Question 4:
 How many records have a fare_amount of 0?
 - 128,210
@@ -54,12 +76,26 @@ How many records have a fare_amount of 0?
 - 20,188,016
 - 8,333
 
+### Question 4 Answer:
+
+>My answer:
+```
+8333
+```
+
 ## Question 5:
 What is the best strategy to make an optimized table in Big Query if your query will always filter based on tpep_dropoff_timedate and order the results by VendorID (Create a new table with this strategy)
 - Partition by tpep_dropoff_timedate and Cluster on VendorID
 - Cluster on by tpep_dropoff_timedate and Cluster on VendorID
 - Cluster on tpep_dropoff_timedate Partition by VendorID
 - Partition by tpep_dropoff_timedate and Partition by VendorID
+
+### Question 5 Answer:
+
+>My answer:
+```
+Partition by tpep_dropoff_timedate and Cluster on VendorID
+```
 
 
 ## Question 6:
@@ -75,6 +111,13 @@ Choose the answer which most closely matches.</br>
 - 5.87 MB for non-partitioned table and 0 MB for the partitioned table
 - 310.31 MB for non-partitioned table and 285.64 MB for the partitioned table
 
+### Question 6 Answer:
+
+>My answer:
+```
+310.24 MB for non-partitioned table and 26.84 MB for the partitioned table
+```
+
 
 ## Question 7: 
 Where is the data stored in the External Table you created?
@@ -84,11 +127,36 @@ Where is the data stored in the External Table you created?
 - GCP Bucket
 - Big Table
 
+### Question 7 Answer:
+
+>My answer:
+```
+GCP Bucket
+```
+
 ## Question 8:
 It is best practice in Big Query to always cluster your data:
 - True
 - False
 
+### Question 8 Answer:
+
+>My answer:
+```
+False
+If your dataset is small, clustering won't provide significant benefits.
+Clustering works best with large datasets where queries benefit from reduced scan costs.
+If your queries frequently filter or aggregate by specific columns (e.g., PULocationID, trip_date), clustering can optimize performance.
+```
+
 
 ## (Bonus: Not worth points) Question 8:
 No Points: Write a `SELECT count(*)` query FROM the materialized table you created. How many bytes does it estimate will be read? Why?
+
+### Question Bonus Answer:
+
+>My answer:
+```
+0MB
+If you ran the same query recently and the underlying data hasn't changed, BigQuery serves the result from cache instead of scanning the table again.
+```
