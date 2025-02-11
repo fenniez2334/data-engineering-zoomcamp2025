@@ -100,9 +100,9 @@ Partition by tpep_dropoff_timedate and Cluster on VendorID
 
 ## Question 6:
 Write a query to retrieve the distinct VendorIDs between tpep_dropoff_datetime
-03/01/2024 and 03/15/2024 (inclusive)</br>
+2024-03-01 and 2024-03-15 (inclusive)</br>
 
-Use the materialized table you created earlier in your from clause and note the estimated bytes. Now change the table in the from clause to the partitioned table you created for question 4 and note the estimated bytes processed. What are these values? </br>
+Use the materialized table you created earlier in your from clause and note the estimated bytes. Now change the table in the from clause to the partitioned table you created for question 5 and note the estimated bytes processed. What are these values? </br>
 
 Choose the answer which most closely matches.</br> 
 
@@ -150,8 +150,13 @@ If your queries frequently filter or aggregate by specific columns (e.g., PULoca
 ```
 
 
-## (Bonus: Not worth points) Question 8:
+## (Bonus: Not worth points) Question 9:
 No Points: Write a `SELECT count(*)` query FROM the materialized table you created. How many bytes does it estimate will be read? Why?
+
+
+## Submitting the solutions
+
+Form for submitting: https://courses.datatalks.club/de-zoomcamp-2025/homework/hw3
 
 
 ### Question Bonus Answer:
