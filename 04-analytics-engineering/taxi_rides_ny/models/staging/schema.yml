@@ -51,7 +51,6 @@ models:
               - relationships:
                   to: ref('taxi_zone_lookup')
                   field: locationid
-                  severity: warn
           - name: RateCodeID 
             description: >
                 The final rate code in effect at the end of the trip.
