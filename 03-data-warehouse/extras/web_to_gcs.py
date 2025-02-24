@@ -10,11 +10,12 @@ Pre-reqs:
 2. Set GOOGLE_APPLICATION_CREDENTIALS to your project/service-account key
 3. Set GCP_GCS_BUCKET as your bucket or change default value of BUCKET
 """
-
+# Explicitly set credentials (Optional if env variable is set)
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:/Users/feife/.google/credentials/central-beach-447906-q6-77a764a36004.json"
 # services = ['fhv','green','yellow']
 init_url = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/'
 # switch out the bucketname
-BUCKET = os.environ.get("GCP_GCS_BUCKET", "dtc-data-lake-bucketname")
+BUCKET = os.environ.get("GCP_GCS_BUCKET", "central-beach-447906-q6-bucket")
 
 
 def upload_to_gcs(bucket, object_name, local_file):
@@ -49,7 +50,7 @@ def web_to_gcs(year, service):
         print(f"Local: {file_name}")
 
         # read it back into a parquet file
-        df = pd.read_csv(file_name, compression='gzip')
+        df = pd.read_csv(file_name, compression='gzip', low_memory=False)
         file_name = file_name.replace('.csv.gz', '.parquet')
         df.to_parquet(file_name, engine='pyarrow')
         print(f"Parquet: {file_name}")
@@ -59,8 +60,10 @@ def web_to_gcs(year, service):
         print(f"GCS: {service}/{file_name}")
 
 
-web_to_gcs('2019', 'green')
-web_to_gcs('2020', 'green')
+# web_to_gcs('2019', 'green')
+# web_to_gcs('2020', 'green')
 # web_to_gcs('2019', 'yellow')
 # web_to_gcs('2020', 'yellow')
-
+# FHV(for-hire vehicles)
+web_to_gcs('2019', 'fhv')
+# web_to_gcs('2020', 'fhv')
