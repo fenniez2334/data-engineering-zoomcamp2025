@@ -50,6 +50,23 @@ from {{ source('raw_nyc_tripdata', 'ext_green_taxi' ) }}
 - `select * from myproject.my_nyc_tripdata.ext_green_taxi`
 - `select * from dtc_zoomcamp_2025.raw_nyc_tripdata.green_taxi`
 
+### Question 1 Answer:
+
+`env_var('DBT_BIGQUERY_PROJECT', 'dtc_zoomcamp_2025')`
+DBT looks for an environment variable named DBT_BIGQUERY_PROJECT.
+If this variable is set in the environment, it uses that value.
+If it's not set, it defaults to 'dtc_zoomcamp_2025' (the fallback value).
+
+`env_var('DBT_BIGQUERY_SOURCE_DATASET', 'raw_nyc_tripdata')`
+Similar to the above, DBT tries to find an environment variable named DBT_BIGQUERY_SOURCE_DATASET.
+If it exists, it uses that value.
+If not, it defaults to 'raw_nyc_tripdata'.
+
+>My answer:
+```
+select * from myproject.my_nyc_tripdata.ext_green_taxi
+```
+
 
 ### Question 2: dbt Variables & Dynamic Models
 
@@ -72,6 +89,19 @@ What would you change to accomplish that in a such way that command line argumen
 - Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ var("days_back", env_var("DAYS_BACK", "30")) }}' DAY`
 - Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ env_var("DAYS_BACK", var("days_back", "30")) }}' DAY`
 
+### Question 2 Answer:
+
+`var("days_back", env_var("DAYS_BACK", "30"))`
+This ensures that the value for days_back is determined in the following order of precedence:
+- Command-line argument: If --vars '{"days_back": 7}' is passed when running dbt run, it will take precedence.
+- Environment variable: If no command-line argument is provided, it will check for the DAYS_BACK environment variable.
+- Default value: If neither a command-line argument nor an environment variable is provided, it will default to 30.
+
+>My answer:
+```
+Update the WHERE clause to `pickup_datetime >= CURRENT_DATE - INTERVAL '{{ var("days_back", env_var("DAYS_BACK", "30")) }}' DAY`
+```
+
 
 ### Question 3: dbt Data Lineage and Execution
 
@@ -86,6 +116,25 @@ Select the option that does **NOT** apply for materializing `fct_taxi_monthly_zo
 - `dbt run --select +models/core/fct_taxi_monthly_zone_revenue.sql`
 - `dbt run --select +models/core/`
 - `dbt run --select models/staging/+`
+
+### Question 3 Answer:
+
+`dbt run`
+This command will materialize all models in the project, including `fct_taxi_monthly_zone_revenue`.
+`dbt run --select +models/core/dim_taxi_trips.sql+ --target prod`
+This command will materialize `dim_taxi_trips` and all its downstream dependencies, including `fct_taxi_monthly_zone_revenue`.
+`dbt run --select +models/core/fct_taxi_monthly_zone_revenue.sql`
+This command will materialize `fct_taxi_monthly_zone_revenue` and all its upstream dependencies.
+`dbt run --select +models/core/`
+This command will materialize all models in the `core` directory and their upstream dependencies.
+`dbt run --select models/staging/+`
+This command will materialize all models in the `staging` directory and their downstream dependencies. If `fct_taxi_monthly_zone_revenue` is not in the `staging` directory or directly downstream of a model in the `staging` directory, this does NOT apply.
+
+
+>My answer:
+```
+dbt run --select models/staging/+
+```
 
 
 ### Question 4: dbt Macros and Jinja
@@ -125,6 +174,13 @@ That all being said, regarding macro above, **select all statements that are tru
 - When using `stg`, it materializes in the dataset defined in `DBT_BIGQUERY_STAGING_DATASET`, or defaults to `DBT_BIGQUERY_TARGET_DATASET`
 - When using `staging`, it materializes in the dataset defined in `DBT_BIGQUERY_STAGING_DATASET`, or defaults to `DBT_BIGQUERY_TARGET_DATASET`
 
+### Question 4 Answer:
+
+>My answer:
+```
+1,3,4,5 is True, 2 is False
+```
+
 
 ## Serious SQL
 
@@ -152,6 +208,61 @@ Considering the YoY Growth in 2020, which were the yearly quarters with the best
 - green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q1, worst: 2020/Q2}
 - green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q3, worst: 2020/Q4}
 
+### Question 5 Answer:
+
+>Command:
+```sql
+{{ config(materialized='table') }}
+
+with quarterly_revenue as (
+    select
+        service_type,
+        extract(year from pickup_datetime) as year,
+        extract(quarter from pickup_datetime) as quarter,
+        concat(extract(year from pickup_datetime), '/Q', extract(quarter from pickup_datetime)) as year_quarter,
+        count(*) as num_trips,
+        sum(total_amount) as total_revenue
+    from {{ ref('fact_trips') }}
+    group by 1, 2, 3, 4
+),
+
+yoy_growth as (
+    select
+        curr.service_type,
+        curr.year_quarter,
+        curr.num_trips,
+        curr.total_revenue as current_revenue,
+        prev.total_revenue as previous_revenue,
+        round(
+            ((curr.total_revenue - prev.total_revenue) / prev.total_revenue) * 100, 2
+        ) as yoy_growth_percent
+    from quarterly_revenue curr
+    left join quarterly_revenue prev
+        on curr.service_type = prev.service_type
+        and curr.year = prev.year + 1
+        and curr.quarter = prev.quarter
+)
+
+select *
+from yoy_growth
+order by service_type, year_quarter
+```
+
+>My answer:
+```
+Taxi_Type	Year/Quarter	YoY Growth (%)
+Green	     2020/Q1	    -47.77
+Green	     2020/Q2	    -87.1
+Green	     2020/Q3	    -78.49
+Green	     2020/Q4	    -76.69
+Yellow	   2020/Q1	    -18.72
+Yellow	   2020/Q2	    -90.35
+Yellow	   2020/Q3	    -74.66
+Yellow   	 2020/Q4	    -66.51
+
+Answer: green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q1, worst: 2020/Q2}
+```
+
 
 ### Question 6: P97/P95/P90 Taxi Monthly Fare
 
@@ -166,6 +277,58 @@ Now, what are the values of `p97`, `p95`, `p90` for Green Taxi and Yellow Taxi, 
 - green: {p97: 40.0, p95: 33.0, p90: 24.5}, yellow: {p97: 52.0, p95: 37.0, p90: 25.5}
 - green: {p97: 40.0, p95: 33.0, p90: 24.5}, yellow: {p97: 31.5, p95: 25.5, p90: 19.0}
 - green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 52.0, p95: 25.5, p90: 19.0}
+
+### Question 6 Answer:
+
+>Command:
+```sql
+{{ config(materialized='table') }}
+
+with valid_trips as (
+    select
+        service_type,
+        extract(year from pickup_datetime) as pickup_year,
+        extract(month from pickup_datetime) as pickup_month,
+        fare_amount
+    from {{ ref('fact_trips') }}
+    where
+        fare_amount > 0
+        and trip_distance > 0
+        and payment_type_description in ('Cash', 'Credit card')
+),
+
+percentiles as (
+    select
+        service_type,
+        pickup_year,
+        pickup_month,
+        PERCENTILE_CONT(fare_amount, 0.97) OVER (PARTITION BY service_type, pickup_year, pickup_month) AS p97,
+        PERCENTILE_CONT(fare_amount, 0.95) OVER (PARTITION BY service_type, pickup_year, pickup_month) AS p95,
+        PERCENTILE_CONT(fare_amount, 0.90) OVER (PARTITION BY service_type, pickup_year, pickup_month) AS p90
+    from valid_trips
+)
+
+SELECT
+    service_type,
+    pickup_year,
+    pickup_month,
+    MAX(p97) AS p97, -- Aggregate to get a single value per group
+    MAX(p95) AS p95, -- Aggregate to get a single value per group
+    MAX(p90) AS p90  -- Aggregate to get a single value per group
+FROM percentiles
+GROUP BY service_type, pickup_year, pickup_month
+order by service_type, pickup_year, pickup_month
+```
+
+>My answer:
+```
+Service Type	Year	Month	P97	  P95	  P90
+Green	        2020	4	    55.0  45.0  26.5
+Yellow	      2020	4  	  31.5  25.5  19.0
+
+Answer: green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 31.5, p95: 25.5, p90: 19.0}
+```
+
 
 
 ### Question 7: Top #Nth longest P90 travel time Location for FHV
@@ -187,6 +350,82 @@ For the Trips that **respectively** started from `Newark Airport`, `SoHo`, and `
 - LaGuardia Airport, Saint Albans, Howard Beach
 - LaGuardia Airport, Rosedale, Bath Beach
 - LaGuardia Airport, Yorkville East, Greenpoint
+
+### Question 7 Answer:
+
+>Command:
+```sql
+{{ config(materialized='table') }}
+
+WITH trip_data AS (
+    SELECT 
+        trip_year,
+        trip_month,
+        pickup_locationid,
+        dropoff_locationid,
+        pickup_zone,
+        dropoff_zone,
+        trip_duration
+    FROM {{ ref('dim_fhv_trips') }}
+    WHERE pickup_zone is not null and dropoff_zone is not null
+),
+
+pct_data AS (
+    SELECT 
+        trip_year,
+        trip_month,
+        pickup_locationid,
+        dropoff_locationid,
+        pickup_zone,
+        dropoff_zone,
+        PERCENTILE_CONT(trip_duration, 0.90) OVER (
+            PARTITION BY trip_year, trip_month, pickup_locationid, dropoff_locationid
+        ) AS p90_trip_duration
+    FROM trip_data
+),
+
+ranked_dropoff_zones AS (
+    SELECT 
+        trip_year,
+        trip_month,
+        pickup_locationid,
+        dropoff_locationid,
+        pickup_zone,
+        dropoff_zone,
+        p90_trip_duration,
+        DENSE_RANK() OVER (
+            PARTITION BY trip_year, trip_month, pickup_locationid
+            ORDER BY p90_trip_duration DESC
+        ) AS duration_rank
+    FROM pct_data
+)
+
+
+SELECT 
+    trip_year,
+    trip_month,
+    pickup_locationid,
+    dropoff_locationid,
+    pickup_zone,
+    dropoff_zone,
+    p90_trip_duration,
+    duration_rank
+FROM ranked_dropoff_zones
+ORDER BY 
+    trip_year, 
+    trip_month, 
+    pickup_locationid, 
+    dropoff_locationid
+
+-- In Bigquery use the following sql:
+SELECT * FROM `central-beach-447906-q6.trips_data_all.fct_fhv_monthly_zone_traveltime_p90` 
+WHERE trip_year = 2019 and trip_month = 11 and pickup_zone in ('Newark Airport', 'SoHo', 'Yorkville East') and duration_rank = 2;
+```
+
+>My answer:
+```
+LaGuardia Airport, Chinatown, Garment District
+```
 
 
 ## Submitting the solutions
