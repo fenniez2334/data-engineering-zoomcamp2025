@@ -18,6 +18,14 @@ wget https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-10.par
 
 What's the output?
 
+### Question 1 Answer:
+>My answer:
+```
+'3.3.2'
+```
+
+
+
 > [!NOTE]
 > To install PySpark follow this [guide](https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/05-batch/setup/pyspark.md)
 
@@ -35,6 +43,20 @@ What is the average size of the Parquet (ending with .parquet extension) Files t
 - 75MB
 - 100MB
 
+### Question 2 Answer:
+>My code:
+```
+output_path = f'data/pq/yellow/2024/10/'
+df_yellow_202410 \
+    .repartition(4) \
+    .write.parquet(output_path)
+```
+
+>My answer:
+```
+I get 4 parquet files with size 24.2 MB, so 25MB is the answer.
+```
+
 
 ## Question 3: Count records 
 
@@ -47,6 +69,24 @@ Consider only trips that started on the 15th of October.
 - 125,567
 - 145,567
 
+### Question 3 Answer:
+>My code:
+```
+spark.sql("""
+SELECT
+    count(*) AS total_trips
+FROM
+    yellow_data
+WHERE
+    CAST(pickup_datetime AS DATE) = '2024-10-15' AND CAST(dropoff_datetime AS DATE) = '2024-10-15'
+""").show()
+```
+
+>My answer:
+```
+125,567
+```
+
 
 ## Question 4: Longest trip
 
@@ -57,6 +97,25 @@ What is the length of the longest trip in the dataset in hours?
 - 162
 - 182
 
+### Question 4 Answer:
+>My code:
+```
+spark.sql("""
+SELECT 
+    MAX((unix_timestamp(dropoff_datetime) - unix_timestamp(pickup_datetime)) / 3600) AS max_trip_length
+FROM yellow_data
+""").show()
+```
+
+>My answer:
+```
++------------------+
+|   max_trip_length|
++------------------+
+|162.61777777777777|
++------------------+
+```
+
 
 ## Question 5: User Interface
 
@@ -66,6 +125,12 @@ Spark’s User Interface which shows the application's dashboard runs on which l
 - 443
 - 4040
 - 8080
+
+### Question 5 Answer:
+>My answer:
+```
+4040
+```
 
 
 
@@ -83,6 +148,27 @@ Using the zone lookup data and the Yellow October 2024 data, what is the name of
 - Arden Heights
 - Rikers Island
 - Jamaica Bay
+
+### Question 6 Answer:
+>My code:
+```
+spark.sql("""
+SELECT 
+    yellow_data.PULocationID,
+    zone_data.Zone,
+    count(1) AS zone_freq
+FROM yellow_data left join zone_data on yellow_data.PULocationID = zone_data.LocationID
+GROUP BY
+    1, 2
+ORDER BY 
+    zone_freq 
+""").show()
+```
+
+>My answer:
+```
+Governor's Island/Ellis Island/Liberty Island
+```
 
 
 ## Submitting the solutions
