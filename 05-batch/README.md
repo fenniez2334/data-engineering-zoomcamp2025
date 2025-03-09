@@ -13,7 +13,7 @@
 
 ## 5.2 Installation
 
-Follow [these intructions](setup/) to install Spark:
+Follow [these instructions](setup/) to install Spark:
 
 * [Windows](setup/windows.md)
 * [Linux](setup/linux.md)
@@ -103,7 +103,7 @@ Script to prepare the Dataset [download_data.sh](code/download_data.sh)
 
 # Homework
 
-* [2024 Homework](../cohorts/2024/05-batch/homework.md)
+* [2025 Homework](../cohorts/2025/05-batch/homework.md)
 
 
 # Community notes
