@@ -72,6 +72,25 @@ Find out what you need to execute based on the `help` output.
 
 What's the version, based on the output of the command you executed? (copy the entire version)
 
+### Question 1 Answer:
+
+I run `docker exec -it redpanda-1 bash` to enter the Redpanda container.
+
+Once inside the container, I execute `rpk version` to get version details.
+
+>My answer:
+```
+Version:     v24.2.18
+Git ref:     f9a22d4430
+Build date:  2025-02-14T12:52:55Z
+OS/Arch:     linux/amd64
+Go version:  go1.23.1
+
+Redpanda Cluster
+  node-1  v24.2.18 - f9a22d443087b824803638623d6b7492ec8221f9
+
+```
+
 
 ## Question 2. Creating a topic
 
@@ -83,6 +102,16 @@ redpandas.
 Read the output of `help` and based on it, create a topic with name `green-trips` 
 
 What's the output of the command for creating a topic? Include the entire output in your answer.
+
+### Question 2 Answer:
+
+Inside the container, I run `rpk topic create green-trips` and get following output:
+
+>My answer:
+```
+TOPIC        STATUS
+green-trips  OK
+```
 
 
 ## Question 3. Connecting to the Kafka server
@@ -122,6 +151,12 @@ producer.bootstrap_connected()
 
 Provided that you can connect to the server, what's the output
 of the last command?
+
+### Question 3 Answer:
+>My answer:
+```
+True
+```
 
 ## Question 4: Sending the Trip Data
 
@@ -167,6 +202,38 @@ took = t1 - t0
 
 How much time did it take to send the entire dataset and flush? 
 
+### Question 4 Answer:
+>My code:
+```
+from time import time
+t0 = time()
+
+with open(csv_file, 'r', newline='', encoding='utf-8') as file:
+    reader = csv.DictReader(file)
+
+    for row in reader:
+        # Filter only the required columns
+        filtered_row = {key: row[key] for key in required_columns if key in row}
+
+        # Send data to Kafka topic "green-trips"
+        producer.send('green-trips', value=filtered_row)
+
+# Ensure all messages are delivered
+producer.flush()
+# producer.close()
+
+print("Kafka producer finished sending messages.")
+
+t1 = time()
+took = t1 - t0
+print(took)
+```
+
+>My answer:
+```
+56.00370764732361
+```
+
 
 ## Question 5: Build a Sessionization Window (2 points)
 
@@ -177,6 +244,26 @@ Now we have the data in the Kafka stream. It's time to process it.
 * Use a [session window](https://nightlies.apache.org/flink/flink-docs-master/docs/dev/datastream/operators/windows/) with a gap of 5 minutes
 * Use `lpep_dropoff_datetime` time as your watermark with a 5 second tolerance
 * Which pickup and drop off locations have the longest unbroken streak of taxi trips?
+
+### Question 5 Answer:
+>My answer:
+```
++--------------+--------------+---------------------+---------------------+----------+
+| pulocationid | dolocationid | session_start       | session_end         | num_hits |
+|--------------+--------------+---------------------+---------------------+----------|
+| 95           | 95           | 2019-10-16 18:18:42 | 2019-10-16 19:21:16 | 44       |
+| 75           | 74           | 2019-10-17 17:15:34 | 2019-10-17 18:02:08 | 33       |
+| 7            | 7            | 2019-10-16 19:21:56 | 2019-10-16 20:04:19 | 31       |
+| 74           | 75           | 2019-10-21 08:48:10 | 2019-10-21 09:53:42 | 31       |
+| 223          | 223          | 2019-10-16 20:35:32 | 2019-10-16 21:27:57 | 30       |
+| 95           | 95           | 2019-10-16 17:25:09 | 2019-10-16 18:03:22 | 29       |
+| 223          | 223          | 2019-10-02 18:37:53 | 2019-10-02 19:18:04 | 29       |
+| 75           | 74           | 2019-10-02 17:12:14 | 2019-10-02 18:06:07 | 28       |
+| 75           | 74           | 2019-10-22 17:23:28 | 2019-10-22 18:11:39 | 26       |
+| 75           | 74           | 2019-10-01 17:39:01 | 2019-10-01 18:20:31 | 25       |
+...
+The pickup and drop off location 'Forest Hills'(locationid=95) have the longest unbroken streak of taxi trips.
+```
 
 
 ## Submitting the solutions
